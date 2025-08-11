@@ -1,0 +1,73 @@
+{% extends 'voting/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h2>Cast Your Vote</h2>
+        
+        <form method="post" action="{% url 'vote' %}" class="mb-4">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label class="form-label">Select Voter Address:</label>
+                <select name="voter_address" class="form-select" required>
+                    {% for account in accounts %}
+                        <option value="{{ account }}">{{ account }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Choose Candidate:</label>
+                {% for candidate in candidates %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="candidate_id" 
+                               id="candidate{{ candidate.id }}" value="{{ candidate.id }}" required>
+                        <label class="form-check-label" for="candidate{{ candidate.id }}">
+                            {{ candidate.name }}
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Cast Vote</button>
+        </form>
+    </div>
+    
+    <div class="col-md-4">
+        <h3>Live Results</h3>
+        <div id="results">
+            {% for candidate in candidates %}
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <h6 class="card-title">{{ candidate.name }}</h6>
+                        <div class="progress">
+                            <div class="progress-bar bg-primary" role="progressbar" 
+                                 style="width: {{ candidate.progress_width }}%"
+                                 aria-valuenow="{{ candidate.vote_count }}" 
+                                 aria-valuemin="0" aria-valuemax="100">
+                                {{ candidate.vote_count }} votes
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <button onclick="refreshResults()" class="btn btn-secondary btn-sm">Refresh Results</button>
+    </div>
+</div>
+
+<script>
+function refreshResults() {
+    fetch('{% url "results" %}')
+        .then(response => response.json())
+        .then(data => {
+            location.reload(); // Simple refresh - you can make this more sophisticated
+        });
+}
+
+// Auto-refresh every 5 seconds
+setInterval(refreshResults, 5000);
+</script>
+{% endblock %}
